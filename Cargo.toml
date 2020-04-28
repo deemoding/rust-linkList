@@ -1,5 +1,5 @@
 [package]
-name = "doublyLinkedList"
+name = "link_list"
 version = "0.1.0"
 authors = ["DeemoDing <wsd009811@gmail.com>"]
 edition = "2018"
