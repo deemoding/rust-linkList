@@ -1,6 +1,6 @@
 #[warn(unused_imports)]
-// use std::ops::{Deref, DerefMut};
-use std::collections::linked_list;
+use std::ops::{Deref, DerefMut};
+// use std::collections::linked_list;
 use std::rc::Rc;
 
 struct Node<T> {
@@ -36,15 +36,28 @@ impl<T: PartialEq + Clone> LinkList<T> {
 
     pub fn push_back(&mut self, value: T) {
         let mut node = Node::new(value);
-        node.pre = *self.tail.as_ref();
         let r = Rc::new(node);
         if self.len == 0 {
             self.head = Some(Rc::clone(&r));
         } else {
-            (*self.tail.as_ref()).next = Some(Rc::clone(&r));
+            let mut tail_rc = self.tail.take().unwrap();
+            let mut tail_node = *Rc::get_mut(&mut tail_rc).unwrap();
+            tail_node.next = Some(Rc::clone(&r));
+            node.pre = Some(Rc::clone(&tail_rc));
         }
-        self.tail = Some(Rc::clone(&r));
+        self.tail = Some(r);
         self.len += 1;
+    }
+
+    pub fn pop_back(&mut self) -> Option<T> {
+        match self.tail {
+            None => None,
+            Some(_) => {
+                let node = self.tail.take().unwrap();
+                self.tail = node.pre;
+                return Some(node.value);
+            }
+        }
     }
 
     /*pub fn remove(&mut self, p: &Node<T>) -> bool {
@@ -59,25 +72,25 @@ impl<T: PartialEq + Clone> LinkList<T> {
         return false;
     }*/
 
-    pub fn get_tail(self) -> Option<T> {
-        let tail = self.tail;
-        match tail {
-            Some(mut r) => Some((*Rc::get_mut(&mut r).unwrap()).value.clone()),
-            None => None,
-        }
+    // pub fn get_tail(self) -> Option<T> {
+    //     let tail = self.tail;
+    //     match tail {
+    //         Some(mut r) => Some((*Rc::get_mut(&mut r).unwrap()).value.clone()),
+    //         None => None,
+    //     }
+    // }
+}
+
+impl<T: PartialEq> Deref for Node<T> {
+    type Target = T;
+
+    fn deref(&self) -> &T {
+        &self.value
     }
 }
 
-// impl<T: PartialEq> Deref for LinkList<T> {
-//     type Target = T;
-//
-//     fn deref(&self) -> &T {
-//         &self.value
-//     }
-// }
-//
-// impl<T: PartialEq> DerefMut for LinkList<T> {
-//     fn deref_mut(&mut self) -> &mut T {
-//         &mut self.value
-//     }
-// }
+impl<T: PartialEq> DerefMut for Node<T> {
+    fn deref_mut(&mut self) -> &mut T {
+        &mut self.value
+    }
+}
